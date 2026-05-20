@@ -1,0 +1,56 @@
+<!-- Index.html -->
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Virtual World</title>
+  <style>
+    body { margin: 0; overflow: hidden; background: #000; }
+    canvas { display: block; width: 100vw; height: 100vh; }
+    #hud {
+      position: fixed; top: 10px; left: 10px;
+      color: white; font-family: monospace; font-size: 14px;
+      pointer-events: none; z-index: 10;
+    }
+    #perf {
+      position: fixed; top: 10px; right: 10px;
+      color: lime; font-family: monospace; font-size: 14px;
+      pointer-events: none; z-index: 10;
+    }
+    #story {
+      position: fixed; top: 50%; left: 50%;
+      transform: translate(-50%, -50%);
+      color: gold; font-family: monospace; font-size: 28px;
+      pointer-events: none; z-index: 10;
+      text-shadow: 2px 2px 4px black;
+    }
+    #controls {
+      position: fixed; bottom: 10px; left: 10px;
+      color: #aaa; font-family: monospace; font-size: 12px;
+      pointer-events: none; z-index: 10;
+    }
+  </style>
+</head>
+<body>
+  <canvas id="webgl" width="800" height="600"></canvas>
+
+  <div id="hud"></div>
+  <div id="perf"></div>
+  <div id="story">Find the Lost Baby Goat!</div>
+  <div id="controls">
+    WASD: Move | Q/E: Rotate | Mouse: Look | Click: Add Block | Shift+Click: Remove Block
+  </div>
+
+  <script src="lib/cuon-utils.js"></script>
+  <script src="lib/cuon-matrix-cse160.js"></script>
+
+  <script src="Camera.js"></script>
+  <script src="Cube.js"></script>
+  <script src="Cone.js"></script>
+  
+  <script src="Goat.js"></script>
+  <script src="Map.js"></script>
+  <script src="World.js"></script>
+</body>
+</html>
