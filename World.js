@@ -102,6 +102,7 @@ let canvas;
 let gl;
 let a_Position;
 let a_UV;
+let a_Normal;
 let u_FragColor;
 let u_ModelMatrix;
 let u_ViewMatrix;
@@ -112,6 +113,15 @@ let u_Sampler1;
 let u_Sampler2;
 let u_Sampler3;
 let u_Sampler4;
+let u_lightOn;
+let u_normalOn;
+let u_lightPos;
+let u_lightColor;
+let u_cameraPos;
+let u_spotOn;
+let u_spotPos;
+let u_spotDir;
+let u_spotCutoff;
 
 // Camera
 var camera;
@@ -136,6 +146,19 @@ var g_skyCube = null;
 var g_groundCube = null;
 var g_sandCube = null;
 
+// lighting
+var g_lightOn = true;
+var g_normalOn = false;
+var g_spotOn = true;
+var g_lightPos = [0, 5, 0];
+var g_lightColor = [1.0, 1.0, 1.0];
+var g_lightAnimate = true;
+
+var g_sphere1 = null;
+var g_sphere2 = null;
+var g_lightCube = null;
+
+
 function setupWebGL() {
     canvas = document.getElementById('webgl');
     gl = canvas.getContext("webgl", { preserveDrawingBuffer: true });
@@ -157,6 +180,8 @@ function connectVariablesToGLSL() {
     a_Position = gl.getAttribLocation(gl.program, 'a_Position');
     a_UV = gl.getAttribLocation(gl.program, 'a_UV');
     u_FragColor = gl.getUniformLocation(gl.program, 'u_FragColor');
+    // Normal
+    a_Normal = gl.getAttribLocation(gl.program, 'a_Normal');
     u_ModelMatrix = gl.getUniformLocation(gl.program, 'u_ModelMatrix');
     u_ViewMatrix = gl.getUniformLocation(gl.program, 'u_ViewMatrix');
     u_ProjectionMatrix = gl.getUniformLocation(gl.program, 'u_ProjectionMatrix');
@@ -166,6 +191,15 @@ function connectVariablesToGLSL() {
     u_Sampler2 = gl.getUniformLocation(gl.program, 'u_Sampler2');
     u_Sampler3 = gl.getUniformLocation(gl.program, 'u_Sampler3');
     u_Sampler4 = gl.getUniformLocation(gl.program, 'u_Sampler4');
+    u_lightOn = gl.getUniformLocation(gl.program, 'u_lightOn');
+    u_normalOn = gl.getUniformLocation(gl.program, 'u_normalOn');
+    u_lightPos = gl.getUniformLocation(gl.program, 'u_lightPos');
+    u_lightColor = gl.getUniformLocation(gl.program, 'u_lightColor');
+    u_cameraPos = gl.getUniformLocation(gl.program, 'u_cameraPos');
+    u_spotOn = gl.getUniformLocation(gl.program, 'u_spotOn');
+    u_spotPos = gl.getUniformLocation(gl.program, 'u_spotPos');
+    u_spotDir = gl.getUniformLocation(gl.program, 'u_spotDir');
+    u_spotCutoff = gl.getUniformLocation(gl.program, 'u_spotCutoff');
 }
 
 // Initialize textures and start render loop
@@ -362,37 +396,91 @@ function renderScene() {
     gl.uniformMatrix4fv(u_ViewMatrix, false, camera.viewMatrix.elements);
     gl.uniformMatrix4fv(u_ProjectionMatrix, false, camera.projectionMatrix.elements);
 
+    gl.uniform1i(u_lightOn, g_lightOn);
+    gl.uniform1i(u_normalOn, g_normalOn);
+    gl.uniform1i(u_spotOn, g_spotOn);
+    gl.uniform3f(u_lightPos, g_lightPos[0], g_lightPos[1], g_lightPos[2]);
+    gl.uniform3f(u_lightColor, g_lightColor[0], g_lightColor[1], g_lightColor[2]);
+    gl.uniform3f(u_cameraPos, camera.eye.elements[0], camera.eye.elements[1], camera.eye.elements[2]);
+
+    gl.uniform3f(u_spotPos, 0, 8, -5);
+    gl.uniform3f(u_spotDir, 0, -1, 0);
+    gl.uniform1f(u_spotCutoff, 0.9);
+
+    if (g_lightAnimate) {
+        g_lightPos[0] = 4 * Math.cos(g_seconds);
+        g_lightPos[2] = 4 * Math.sin(g_seconds);
+    }
+
     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
     // Skybox
-    if (!this.skyCube) this.skyCube = new Cube();
-    var sky = this.skyCube || new Cube();
-    sky.color = [0.5, 0.7, 1.0, 1.0];
-    sky.textureNum = 3; 
-    sky.matrix.setTranslate(-50, -50, -50);
-    sky.matrix.scale(100, 100, 100);
-    sky.render();
+    if (!g_skyCube) g_skyCube = new Cube();
+    g_skyCube.color = [0.5, 0.7, 1.0, 1.0];
+    g_skyCube.textureNum = 3;
+    g_skyCube.matrix.setTranslate(-50, -50, -50);
+    g_skyCube.matrix.scale(100, 100, 100);
+    normalMatrix.setInverseOf(g_skyCube.matrix);
+    normalMatrix.transpose();
+    gl.uniformMatrix4fv(u_NormalMatrix, false, normalMatrix.elements);
+    g_skyCube.render();
 
     // Ground   
-    if (!this.groundCube) this.groundCube = new Cube();
-    var ground = this.groundCube || new Cube();
-    ground.color = [0.4, 0.8, 0.3, 1.0];
-    ground.textureNum = 0; 
-    ground.matrix.setTranslate(-16, -0.05, -16); 
-    ground.matrix.scale(32, 0.1, 32); 
-    ground.render();
+    if (!g_groundCube) g_groundCube = new Cube();
+    g_groundCube.color = [0.4, 0.8, 0.3, 1.0];
+    g_groundCube.textureNum = 0;
+    g_groundCube.matrix.setTranslate(-16, -0.05, -16);
+    g_groundCube.matrix.scale(32, 0.1, 32);
+    normalMatrix.setInverseOf(g_groundCube.matrix);
+    normalMatrix.transpose();
+    gl.uniformMatrix4fv(u_NormalMatrix, false, normalMatrix.elements);
+    g_groundCube.render();
 
     // // Sand 
-    if (!this.sandCube) this.sandCube = new Cube();
-    var sand = this.sandCube || new Cube();
-    sand.color = [0.9, 0.85, 0.6, 1.0];
-    sand.textureNum = 4; 
-    sand.matrix.setTranslate(-16, -0.06, -16);
-    sand.matrix.scale(32, 0.1, 32);
-    sand.render();
+    if (!g_sandCube) g_sandCube = new Cube();
+    g_sandCube.color = [0.9, 0.85, 0.6, 1.0];
+    g_sandCube.textureNum = 4;
+    g_sandCube.matrix.setTranslate(-16, -0.06, -16);
+    g_sandCube.matrix.scale(32, 0.1, 32);
+    normalMatrix.setInverseOf(g_sandCube.matrix);
+    normalMatrix.transpose();
+    gl.uniformMatrix4fv(u_NormalMatrix, false, normalMatrix.elements);
+    g_sandCube.render();
 
     // Walls
     drawMap();
+
+     // Light cube
+    if (!g_lightCube) g_lightCube = new Cube();
+    g_lightCube.color = [g_lightColor[0], g_lightColor[1], g_lightColor[2], 1.0];
+    g_lightCube.textureNum = -1;
+    g_lightCube.matrix.setTranslate(g_lightPos[0] - 0.1, g_lightPos[1] - 0.1, g_lightPos[2] - 0.1);
+    g_lightCube.matrix.scale(0.2, 0.2, 0.2);
+    normalMatrix.setInverseOf(g_lightCube.matrix);
+    normalMatrix.transpose();
+    gl.uniformMatrix4fv(u_NormalMatrix, false, normalMatrix.elements);
+    g_lightCube.render();
+
+    // Sphere 1
+    if (!g_sphere1) g_sphere1 = new Sphere();
+    g_sphere1.color = [1.0, 0.3, 0.3, 1.0];
+    g_sphere1.textureNum = -1;
+    g_sphere1.matrix.setTranslate(3, 1, -3);
+    normalMatrix.setInverseOf(g_sphere1.matrix);
+    normalMatrix.transpose();
+    gl.uniformMatrix4fv(u_NormalMatrix, false, normalMatrix.elements);
+    g_sphere1.render();
+
+    // Sphere 2
+    if (!g_sphere2) g_sphere2 = new Sphere();
+    g_sphere2.color = [0.3, 0.3, 1.0, 1.0];
+    g_sphere2.textureNum = -1;
+    g_sphere2.matrix.setTranslate(-3, 1, -3);
+    normalMatrix.setInverseOf(g_sphere2.matrix);
+    normalMatrix.transpose();
+    gl.uniformMatrix4fv(u_NormalMatrix, false, normalMatrix.elements);
+    g_sphere2.render();
+
 
     // Baby goat 
     // always render it, but before finding it stays at hidden spot
@@ -462,6 +550,41 @@ function main() {
     gl.clearColor(0.0, 0.0, 0.0, 1.0);
 
     document.getElementById('story').innerHTML = "Find the Lost Kid!";
+
+    document.getElementById('btnNormal').onclick = function() {
+        g_normalOn = !g_normalOn;
+    };
+    document.getElementById('btnLight').onclick = function() {
+        g_lightOn = !g_lightOn;
+    };
+    document.getElementById('btnSpot').onclick = function() {
+        g_spotOn = !g_spotOn;
+    };
+    document.getElementById('btnAnimate').onclick = function() {
+        g_lightAnimate = !g_lightAnimate;
+    };
+
+    document.getElementById('lightX').oninput = function() {
+        g_lightPos[0] = parseFloat(this.value);
+        g_lightAnimate = false;
+    };
+    document.getElementById('lightY').oninput = function() {
+        g_lightPos[1] = parseFloat(this.value);
+    };
+    document.getElementById('lightZ').oninput = function() {
+        g_lightPos[2] = parseFloat(this.value);
+        g_lightAnimate = false;
+    };
+
+    document.getElementById('lightR').oninput = function() {
+        g_lightColor[0] = parseFloat(this.value) / 255;
+    };
+    document.getElementById('lightG').oninput = function() {
+        g_lightColor[1] = parseFloat(this.value) / 255;
+    };
+    document.getElementById('lightB').oninput = function() {
+        g_lightColor[2] = parseFloat(this.value) / 255;
+    };
 
     tick();
 }
