@@ -123,6 +123,8 @@ let u_spotPos;
 let u_spotDir;
 let u_spotCutoff;
 
+var g_teapot = null;
+
 // Camera
 var camera;
 
@@ -481,6 +483,12 @@ function renderScene() {
     gl.uniformMatrix4fv(u_NormalMatrix, false, normalMatrix.elements);
     g_sphere2.render();
 
+    if (g_teapot) {
+        g_teapot.matrix.setTranslate(0, 0.5, -5);
+        g_teapot.matrix.scale(0.3, 0.3, 0.3);
+        g_teapot.matrix.rotate(g_seconds * 20, 0, 1, 0);
+        g_teapot.render(gl);
+    }
 
     // Baby goat 
     // always render it, but before finding it stays at hidden spot
@@ -548,6 +556,10 @@ function main() {
     g_babyGoat.scale = 1.2;
 
     gl.clearColor(0.0, 0.0, 0.0, 1.0);
+
+    // Teapot
+    g_teapot = new Model(gl, "teapot.obj");
+    g_teapot.color = [0.8, 0.5, 0.2, 1.0];
 
     document.getElementById('story').innerHTML = "Find the Lost Kid!";
 
