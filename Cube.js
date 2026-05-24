@@ -92,12 +92,13 @@ class Cube {
 
         var FSIZE = allverts.BYTES_PER_ELEMENT;
 
-        // position attributes
-        gl.vertexAttribPointer(a_Position, 3, gl.FLOAT, false, FSIZE * 5, 0);
+        gl.vertexAttribPointer(a_Position, 3, gl.FLOAT, false, FSIZE * 8, 0);
         gl.enableVertexAttribArray(a_Position);
 
-        // uv attribute 
-        gl.vertexAttribPointer(a_UV, 2, gl.FLOAT, false, FSIZE * 5, FSIZE * 3);
+        gl.vertexAttribPointer(a_UV, 2, gl.FLOAT, false, FSIZE * 8, FSIZE * 3);
+        gl.enableVertexAttribArray(a_UV);
+
+        gl.vertexAttribPointer(a_UV, 2, gl.FLOAT, false, FSIZE * 8, FSIZE * 5);
         gl.enableVertexAttribArray(a_UV);
 
         // draw all 36 vertices
