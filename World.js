@@ -10,19 +10,27 @@
 var VSHADER_SOURCE =
     'attribute vec4 a_Position;\n' +
     'attribute vec2 a_UV;\n' +
+    'attribute vec3 a_Normal;\n' +
     'varying vec2 v_UV;\n' +
+    'varying vec3 v_Normal;\n' +
+    'varying vec3 v_Position;\n' +
     'uniform mat4 u_ModelMatrix;\n' +
     'uniform mat4 u_ViewMatrix;\n' +
     'uniform mat4 u_ProjectionMatrix;\n' +
+    'uniform mat4 u_NormalMatrix;\n' +
     'void main() {\n' +
     '  gl_Position = u_ProjectionMatrix * u_ViewMatrix * u_ModelMatrix * a_Position;\n' +
     '  v_UV = a_UV;\n' +
+    '  v_Position = vec3(u_ModelMatrix * a_Position);\n' +
+    '  v_Normal = normalize(vec3(u_NormalMatrix * vec4(a_Normal, 0.0)));\n' +
     '}\n';
 
 // Fragment shader
 var FSHADER_SOURCE =
     'precision mediump float;\n' +
     'varying vec2 v_UV;\n' +
+    'varying vec3 v_Normal;\n' +
+    'varying vec3 v_Position;\n' +
     'uniform vec4 u_FragColor;\n' +
     'uniform sampler2D u_Sampler0;\n' +
     'uniform sampler2D u_Sampler1;\n' +
@@ -30,22 +38,63 @@ var FSHADER_SOURCE =
     'uniform sampler2D u_Sampler3;\n' +
     'uniform sampler2D u_Sampler4;\n' +
     'uniform int u_whichTexture;\n' +
+    'uniform bool u_lightOn;\n' +
+    'uniform bool u_normalOn;\n' +
+    'uniform bool u_spotOn;\n' +
+    'uniform vec3 u_lightPos;\n' +
+    'uniform vec3 u_lightColor;\n' +
+    'uniform vec3 u_cameraPos;\n' +
+    'uniform vec3 u_spotPos;\n' +
+    'uniform vec3 u_spotDir;\n' +
+    'uniform float u_spotCutoff;\n' +
     'void main() {\n' +
-    '  if (u_whichTexture == -1) {\n' +
-    '    gl_FragColor = u_FragColor;\n' +
-    '  } else if (u_whichTexture == 0) {\n' +
-    '    gl_FragColor = texture2D(u_Sampler0, v_UV);\n' +
-    '  } else if (u_whichTexture == 1) {\n' +
-    '    gl_FragColor = texture2D(u_Sampler1, v_UV);\n' +
-    '  } else if (u_whichTexture == 2) {\n' +
-    '    gl_FragColor = texture2D(u_Sampler2, v_UV);\n' +
-    '  } else if (u_whichTexture == 3) {\n' +
-    '    gl_FragColor = texture2D(u_Sampler3, v_UV);\n' +
-    '  } else if (u_whichTexture == 4) {\n' +
-    '    gl_FragColor = texture2D(u_Sampler4, v_UV);\n' +
-    '  } else {\n' +
-    '    gl_FragColor = vec4(1, 0.2, 0.2, 1);\n' +
+    '  if (u_normalOn) {\n' +
+    '    gl_FragColor = vec4((v_Normal + 1.0) / 2.0, 1.0);\n' +
+    '    return;\n' +
     '  }\n' +
+    '  vec4 texColor;\n' +
+    '  if (u_whichTexture == -1) {\n' +
+    '    texColor = u_FragColor;\n' +
+    '  } else if (u_whichTexture == 0) {\n' +
+    '    texColor = texture2D(u_Sampler0, v_UV);\n' +
+    '  } else if (u_whichTexture == 1) {\n' +
+    '    texColor = texture2D(u_Sampler1, v_UV);\n' +
+    '  } else if (u_whichTexture == 2) {\n' +
+    '    texColor = texture2D(u_Sampler2, v_UV);\n' +
+    '  } else if (u_whichTexture == 3) {\n' +
+    '    texColor = texture2D(u_Sampler3, v_UV);\n' +
+    '  } else if (u_whichTexture == 4) {\n' +
+    '    texColor = texture2D(u_Sampler4, v_UV);\n' +
+    '  } else {\n' +
+    '    texColor = vec4(1, 0.2, 0.2, 1);\n' +
+    '  }\n' +
+    '  if (!u_lightOn) {\n' +
+    '    gl_FragColor = texColor;\n' +
+    '    return;\n' +
+    '  }\n' +
+    '  vec3 N = normalize(v_Normal);\n' +
+    '  vec3 L = normalize(u_lightPos - v_Position);\n' +
+    '  vec3 V = normalize(u_cameraPos - v_Position);\n' +
+    '  vec3 R = reflect(-L, N);\n' +
+    '  vec3 ambient = 0.2 * texColor.rgb;\n' +
+    '  float nDotL = max(dot(N, L), 0.0);\n' +
+    '  vec3 diffuse = u_lightColor * texColor.rgb * nDotL;\n' +
+    '  float spec = pow(max(dot(V, R), 0.0), 32.0);\n' +
+    '  vec3 specular = u_lightColor * spec * 0.8;\n' +
+    '  vec3 result = ambient + diffuse + specular;\n' +
+    '  if (u_spotOn) {\n' +
+    '    vec3 SL = normalize(u_spotPos - v_Position);\n' +
+    '    vec3 SD = normalize(u_spotDir);\n' +
+    '    float theta = dot(SL, SD);\n' +
+    '    if (theta > u_spotCutoff) {\n' +
+    '      vec3 SR = reflect(-SL, N);\n' +
+    '      float snDotL = max(dot(N, SL), 0.0);\n' +
+    '      float sSpec = pow(max(dot(V, SR), 0.0), 32.0);\n' +
+    '      float intensity = (theta - u_spotCutoff) / (1.0 - u_spotCutoff);\n' +
+    '      result += intensity * (texColor.rgb * snDotL + vec3(1.0) * sSpec * 0.5);\n' +
+    '    }\n' +
+    '  }\n' +
+    '  gl_FragColor = vec4(result, texColor.a);\n' +
     '}\n';
 
 // WebGL globals
