@@ -46,10 +46,11 @@ var g_kidLocation = [25, 25];
 var g_wallCube = null;
 
 function drawMap() {
-  // reuse one cube object for all walls
   if (g_wallCube === null) {
     g_wallCube = new Cube();
   }
+
+  var normalMatrix = new Matrix4();
 
   for (var x = 0; x < 32; x++) {
     for (var z = 0; z < 32; z++) {
@@ -57,11 +58,14 @@ function drawMap() {
       if (height > 0) {
         for (var y = 0; y < height; y++) {
           if (y == 0) {
-            g_wallCube.textureNum = 2; // stone at bottom
+            g_wallCube.textureNum = 2;
           } else {
-            g_wallCube.textureNum = 1; // wall texture above
+            g_wallCube.textureNum = 1;
           }
           g_wallCube.matrix.setTranslate(x - 16, y, z - 16);
+          normalMatrix.setInverseOf(g_wallCube.matrix);
+          normalMatrix.transpose();
+          gl.uniformMatrix4fv(u_NormalMatrix, false, normalMatrix.elements);
           g_wallCube.render();
         }
       }
