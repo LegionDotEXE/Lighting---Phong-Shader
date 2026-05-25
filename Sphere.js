@@ -48,6 +48,9 @@ class Sphere {
         gl.uniform4f(u_FragColor, rgba[0], rgba[1], rgba[2], rgba[3]);
         gl.uniformMatrix4fv(u_ModelMatrix, false, this.matrix.elements);
 
+        gl.disableVertexAttribArray(a_UV);
+        gl.vertexAttrib2f(a_UV, 0, 0);
+
         if (this.buffer === null) {
             this.buffer = gl.createBuffer();
         }
