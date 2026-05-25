@@ -98,8 +98,8 @@ class Cube {
         gl.vertexAttribPointer(a_UV, 2, gl.FLOAT, false, FSIZE * 8, FSIZE * 3);
         gl.enableVertexAttribArray(a_UV);
 
-        gl.vertexAttribPointer(a_UV, 2, gl.FLOAT, false, FSIZE * 8, FSIZE * 5);
-        gl.enableVertexAttribArray(a_UV);
+        gl.vertexAttribPointer(a_Normal, 3, gl.FLOAT, false, FSIZE * 8, FSIZE * 5);
+        gl.enableVertexAttribArray(a_Normal);
 
         // draw all 36 vertices
         gl.drawArrays(gl.TRIANGLES, 0, 36);
