@@ -453,30 +453,30 @@ function renderScene() {
     g_lightCube.render();
     gl.uniform1f(u_Emissive, 0.0);
 
-    // Sphere 1 - red, left of center
+    // Sphere 
     if (!g_sphere1) g_sphere1 = new Sphere();
     g_sphere1.color = [1.0, 0.3, 0.3, 1.0];
     g_sphere1.textureNum = -1;
-    g_sphere1.matrix.setTranslate(g_objectCenter[0] - 2, 0.5, g_objectCenter[2]);
-    g_sphere1.matrix.scale(0.5, 0.5, 0.5);
+    g_sphere1.matrix.setTranslate(g_objectCenter[0] - 1, 1.0, g_objectCenter[2]);
+    g_sphere1.matrix.scale(0.3, 0.3, 0.3);
     nm.setInverseOf(g_sphere1.matrix); nm.transpose();
     gl.uniformMatrix4fv(u_NormalMatrix, false, nm.elements);
     g_sphere1.render();
 
-    // Sphere 2 - blue, right of center
+    // Sphere 2
     if (!g_sphere2) g_sphere2 = new Sphere();
     g_sphere2.color = [0.3, 0.3, 1.0, 1.0];
     g_sphere2.textureNum = -1;
-    g_sphere2.matrix.setTranslate(g_objectCenter[0] + 2, 0.5, g_objectCenter[2]);
-    g_sphere2.matrix.scale(0.5, 0.5, 0.5);
+    g_sphere2.matrix.setTranslate(g_objectCenter[0] + 1, 1.0, g_objectCenter[2]);
+    g_sphere2.matrix.scale(0.3, 0.3, 0.3);
     nm.setInverseOf(g_sphere2.matrix); nm.transpose();
     gl.uniformMatrix4fv(u_NormalMatrix, false, nm.elements);
     g_sphere2.render();
 
-    // Teapot OBJ - center
+    // Teapot OBJ
     if (g_teapot && g_teapot.isFullyLoaded) {
-        g_teapot.matrix.setTranslate(g_objectCenter[0], 0.3, g_objectCenter[2]);
-        g_teapot.matrix.scale(0.15, 0.15, 0.15);
+        g_teapot.matrix.setTranslate(g_objectCenter[0], 1.0, g_objectCenter[2]);
+        g_teapot.matrix.scale(0.20, 0.20, 0.20);
         g_teapot.matrix.rotate(g_seconds * 20, 0, 1, 0);
         g_teapot.render(gl);
     }
