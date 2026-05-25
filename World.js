@@ -149,7 +149,7 @@ var g_lightPos = [0, 3, 0];
 var g_lightColor = [1.0, 1.0, 1.0];
 var g_lightAnimate = true;
 var g_lightAngle = 0;
-var g_lightRadius = 3.0;
+var g_lightRadius = 2.0;
 var g_spotInnerDeg = 15;
 var g_spotOuterDeg = 25;
 
@@ -366,19 +366,26 @@ function checkStory() {
 }
 
 function renderScene() {
-    console.log("Drawing sphere1 at", g_objectCenter[0]-2, 1, g_objectCenter[2]);
+    //console.log("Drawing sphere1 at", g_objectCenter[0]-2, 1, g_objectCenter[2]);
     var normalMatrix = new Matrix4();
     var startTime = performance.now();
     var now = performance.now() / 1000.0;
     var dt = now - g_prevTime;
     g_prevTime = now;
 
+    if (g_lightAnimate) {
+        g_lightAngle += dt;
+        g_lightPos[0] = g_objectCenter[0] + g_lightRadius * Math.cos(g_lightAngle);
+        g_lightPos[2] = g_objectCenter[2] + g_lightRadius * Math.sin(g_lightAngle);
+        g_lightPos[1] = 1.5;
+    }
+
     gl.uniformMatrix4fv(u_ViewMatrix, false, camera.viewMatrix.elements);
     gl.uniformMatrix4fv(u_ProjectionMatrix, false, camera.projectionMatrix.elements);
 
     gl.uniform1f(u_ShowNormals, g_showNormals ? 1.0 : 0.0);
     gl.uniform1f(u_EnableLighting, g_enableLighting ? 1.0 : 0.0);
-    gl.uniform1f(u_LightIntensity, 1.0);
+    gl.uniform1f(u_LightIntensity, 2.0);
     gl.uniform1f(u_Emissive, 0.0);
     gl.uniform3f(u_LightPos, g_lightPos[0], g_lightPos[1], g_lightPos[2]);
     gl.uniform3f(u_LightColor, g_lightColor[0], g_lightColor[1], g_lightColor[2]);
@@ -393,13 +400,6 @@ function renderScene() {
     gl.uniform3f(u_SpotDir, sdx/slen, sdy/slen, sdz/slen);
     gl.uniform1f(u_SpotInner, Math.cos(g_spotInnerDeg * Math.PI / 180));
     gl.uniform1f(u_SpotOuter, Math.cos(g_spotOuterDeg * Math.PI / 180));
-
-    if (g_lightAnimate) {
-        g_lightAngle += dt;
-        g_lightPos[0] = g_objectCenter[0] + g_lightRadius * Math.cos(g_lightAngle);
-        g_lightPos[2] = g_objectCenter[2] + g_lightRadius * Math.sin(g_lightAngle);
-        g_lightPos[1] = 3 + 0.5 * Math.sin(g_lightAngle * 2.0);
-    }
 
     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
@@ -553,15 +553,6 @@ function main() {
     camera.eye = new Vector3([2, 0.5, 8]);
     camera.at = new Vector3([2, 0.5, 2]);
     camera.updateView();
-
-    console.log("Object center world:", g_objectCenter);
-    console.log("Sphere1 at world:", g_objectCenter[0]-2, 1, g_objectCenter[2]);
-    console.log("Sphere2 at world:", g_objectCenter[0]+2, 1, g_objectCenter[2]);
-    console.log("Teapot at world:", g_objectCenter[0], 0.5, g_objectCenter[2]);
-    console.log("Map at sphere1:", g_map[Math.floor(g_objectCenter[0]-2+16)][Math.floor(g_objectCenter[2]+16)]);
-    console.log("Map at sphere2:", g_map[Math.floor(g_objectCenter[0]+2+16)][Math.floor(g_objectCenter[2]+16)]);
-    console.log("Map at teapot:", g_map[Math.floor(g_objectCenter[0]+16)][Math.floor(g_objectCenter[2]+16)]);
-    console.log("Map at camera:", g_map[Math.floor(2+16)][Math.floor(8+16)]);
 
     g_babyGoat = new Goat();
     g_babyGoat.position = [10, 0.15, 10];
